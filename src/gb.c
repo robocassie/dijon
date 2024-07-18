@@ -12,6 +12,7 @@ void gb_init(struct gb* gb) {
     printf("Initializing GB...\n");
     
     gb_init_mmap(gb);
+    gb->rom = NULL;
 
     gb->cpu = (struct cpu*) malloc(sizeof(struct cpu));
     cpu_init(gb->cpu, gb);

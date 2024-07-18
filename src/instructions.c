@@ -25,6 +25,7 @@
 #define F_N cpu->f_n
 #define F_H cpu->f_h
 #define F_C cpu->f_c
+#define F_X cpu->f_x
 
 #define LOWER_NIBBLE (op & 0x0F)
 #define UPPER_NIBBLE ((op & 0xF0) >> 4)
@@ -1278,8 +1279,13 @@ int pop(struct cpu* cpu, u8 op) {
     else if(op == 0xF1) r16 = &AF;
     else return invalid_instr(op);
 
-    *r16 = (READ8(SP) | (READ8(SP + 1) << 8));
+    *r16 = (READ8(SP) | (READ8(SP + 1) << 8));    
+    if(op == 0xF1) {
+        // Bottom four bits of F must be 0
+        F_X = 0x0;
+    }
     SP += 2;
+
     return 12;
 }
 

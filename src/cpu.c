@@ -1,13 +1,6 @@
 #include "cpu.h"
 #include "gb.h"
-#include "util.h"
 #include "instructions.h"
-
-#define READ8(addr)  gb_read8(cpu->gb, addr)
-#define READ16(addr) gb_read16(cpu->gb, addr)
-#define WRITE8(addr, data) gb_write8(cpu->gb, addr, data)
-#define WRITE16(addr, data) gb_write16(cpu->gb, addr, data)
-
 
 
 void cpu_init(struct cpu* cpu, struct gb* gb) {
@@ -30,8 +23,8 @@ void cpu_reset(struct cpu* cpu) {
 }
 
 void cpu_request_interrupt(struct cpu* cpu, u8 mask) {
-    u8 oldIF = READ8(0xFF0F);
-    WRITE8(0xFF0F, oldIF | mask);
+    u8 oldIF = gb_read8(cpu->gb, 0xFF0F);
+    gb_write8(cpu->gb, 0xFF0F, oldIF | mask);
 }
 
 bool cpu_service_interrupts(struct cpu* cpu) {
@@ -62,11 +55,11 @@ bool cpu_service_interrupts(struct cpu* cpu) {
     }
 
     if(interruptToHandle != 0x00) {
-        WRITE8(0xFF0F, requestedInterrupts & (~interruptToHandle));
+        gb_write8(cpu->gb, 0xFF0F, requestedInterrupts & (~interruptToHandle));
         cpu->ime = false;
         u16 returnAddr = cpu->pc;
-        WRITE8(--cpu->sp, (returnAddr & 0xFF00) >> 8);
-        WRITE8(--cpu->sp, returnAddr & 0xFF);
+        gb_write8(cpu->gb, --cpu->sp, (returnAddr & 0xFF00) >> 8);
+        gb_write8(cpu->gb, --cpu->sp, returnAddr & 0xFF);
         cpu->pc = vectorAddress;
         cpu->lastCycles = 20;
         return true;
@@ -91,9 +84,13 @@ int cpu_run(struct cpu* cpu) {
     if(cpu->imeWait > 0) {
         cpu->imeWait--;
     }
-    if(cpu_execute(cpu) < 0) {
+
+    int instrCycles = execute_instr(cpu);
+    if(instrCycles == -1) {
         return -1;
     }
+    cpu->lastCycles = instrCycles;
+
     // EI delays enabling ime by one instruction
     if(cpu->imeWait == 0) {
         cpu->imeWait = -1;
@@ -105,27 +102,3 @@ int cpu_run(struct cpu* cpu) {
 
     return 0;
 }
-
-int cpu_execute(struct cpu* cpu) {
-
-    u8 opcode = READ8(cpu->pc);
-
-    if(cpu->loggingEnabled) {
-        log_instruction_line(cpu, cpu->pc, opcode);
-        if(opcode == 0xCB) {
-            log_instruction_line(cpu, cpu->pc + 1, READ8(cpu->pc + 1) + 256);
-        }
-    }
-
-    cpu->pc++;
-
-    int (*instr_ptr)(struct cpu*, u8) = instructions[opcode].ptr;
-    cpu->lastCycles = instr_ptr(cpu, opcode);
-    
-    if(cpu->lastCycles == -1) {
-        return -1;
-    }
-
-    return 0;
-}
-

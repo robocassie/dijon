@@ -1354,6 +1354,7 @@ struct instr_t instructions[512] = {
 #define SRA(reg) \
     F_C = reg & 0x1; \
     reg >>= 1; \
+    reg |= ((reg & 0x40) << 1); \
     F_Z = (reg == 0); \
     F_N = 0; \
     F_H = 0; \
@@ -1362,6 +1363,7 @@ struct instr_t instructions[512] = {
     u8 byte = READ8(HL); \
     F_C = byte & 0x1; \
     byte >>= 1; \
+    byte |= ((byte & 0x40) << 1); \
     WRITE8(HL, byte); \
     F_Z = (byte == 0); \
     F_N = 0; \
@@ -1370,7 +1372,6 @@ struct instr_t instructions[512] = {
 #define SRL(reg) \
     F_C = reg & 0x1; \
     reg >>= 1; \
-    reg |= ((reg & 0x40) << 1); \
     F_Z = (reg == 0); \
     F_N = 0; \
     F_H = 0; \
@@ -1379,7 +1380,6 @@ struct instr_t instructions[512] = {
     u8 byte = READ8(HL); \
     F_C = byte & 0x1; \
     byte >>= 1; \
-    byte |= ((byte & 0x40) << 1); \
     WRITE8(HL, byte); \
     F_Z = (byte == 0); \
     F_N = 0; \

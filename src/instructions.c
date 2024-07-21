@@ -579,7 +579,7 @@ struct instr_t instructions[512] = {
 };
 
 #define INV() \
-    printf("Warning: attempting to execute invalid opcode %02X", opcode); \
+    printf("Warning: attempting to execute invalid opcode %02X!\n", opcode); \
     return -1;
 // Misc
 #define NOP() \
@@ -648,8 +648,8 @@ struct instr_t instructions[512] = {
 #define ADD_SP_S8() \
     s8 s = READ8(PC); \
     PC++; \
-    F_C = ((SP + s) & 0x10000) == 0x10000; \
-    F_H = (((SP & 0xFFF) + s) & 0x1000) == 0x1000; \
+    F_C = (((SP & 0xFF) + (u8)s) & 0x100) == 0x100; \
+    F_H = (((SP & 0xF) + (u8)(s & 0xF)) & 0x10) == 0x10; \
     SP += s; \
     F_Z = 0; \
     F_N = 0; \
@@ -820,8 +820,8 @@ struct instr_t instructions[512] = {
 #define LD_HL_SP_S8() \
     s8 s = READ8(PC); \
     PC++; \
-    F_C = ((SP + s) & 0x10000) == 0x10000; \
-    F_H = (((SP & 0xFFF) + s) & 0x1000) == 0x1000; \
+    F_C = (((SP & 0xFF) + (u8)s) & 0x100) == 0x100; \
+    F_H = (((SP & 0xF) + (u8)(s & 0xF)) & 0x10) == 0x10; \
     HL = SP + s; \
     F_Z = 0; \
     F_N = 0; \

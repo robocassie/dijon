@@ -85,7 +85,7 @@ void gb_disable_bootrom(struct gb* gb) {
     }
     printf("Disabling bootrom and reloading ROM zeropage!\n");
     for(u16 i = 0x0000; i < 0x0100; i++) {
-        gb_write8(gb, i, gb->rom[i]);
+        gb->mmap[i] = gb->rom[i];
     }
 }
 
@@ -138,6 +138,11 @@ u8 gb_read8(struct gb* gb, u16 addr) {
 }
 
 void gb_write8(struct gb* gb, u16 addr, u8 byte) {
+    if(addr < 0x8000) {
+        printf("Write to ROM address %04X, value %02X\n", addr, byte);
+        return;
+    }
+
     gb->mmap[addr] = byte;
 
     if(addr == 0xFF46) {
@@ -154,6 +159,10 @@ u16 gb_read16(struct gb* gb, u16 addr) {
 }
 
 void gb_write16(struct gb* gb, u16 addr, u16 word) {
+    if(addr < 0x8000) {
+        printf("Write16 to ROM address %04X, value %04X\n", addr, word);
+        return;
+    }
     gb->mmap[addr] = word & 0xFF;
     gb->mmap[addr + 1] = word >> 8;
 }

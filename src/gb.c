@@ -50,7 +50,8 @@ void gb_destroy(struct gb* gb) {
     cpu_destroy(gb->cpu);
     free(gb->cpu);
     free(gb->mmap);
-    free(gb->rom);
+    if(gb->rom)
+        free(gb->rom);
 }
 
 void gb_init_mmap(struct gb* gb) {

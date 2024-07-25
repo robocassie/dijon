@@ -602,7 +602,7 @@ struct instr_t instructions[512] = {
 
 // Incs
 #define INC(reg) \
-    F_H = (((reg & 0xF) + 1) & 0x10) == 0x10; \
+    F_H = (reg & 0xF) == 0xF; \
     reg++; \
     F_Z = (reg == 0); \
     F_N = 0; \
@@ -612,7 +612,7 @@ struct instr_t instructions[512] = {
     return 8;
 #define INC_XHL() \
     u8 d = READ8(HL); \
-    F_H = (((d & 0xF) + 1) & 0x10) == 0x10; \
+    F_H = (d & 0xF) == 0xF; \
     d++; \
     F_Z = (d == 0); \
     F_N = 0; \
@@ -646,8 +646,7 @@ struct instr_t instructions[512] = {
     F_N = 0; \
     return 8;
 #define ADD_SP_S8() \
-    s8 s = READ8(PC); \
-    PC++; \
+    s8 s = READ8(PC++); \
     F_C = (((SP & 0xFF) + (u8)s) & 0x100) == 0x100; \
     F_H = (((SP & 0xF) + (u8)(s & 0xF)) & 0x10) == 0x10; \
     SP += s; \
@@ -670,8 +669,7 @@ struct instr_t instructions[512] = {
     F_N = 0; \
     return 8;
 #define ADD_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = ((A + byte) & 0x100) == 0x100; \
     F_H = (((A & 0xF) + (byte & 0xF)) & 0x10) == 0x10; \
     A += byte; \
@@ -698,8 +696,7 @@ struct instr_t instructions[512] = {
     return 8;
 #define ADC_U8() \
     u8 oc = F_C; \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = ((A + byte + oc) & 0x100) == 0x100; \
     F_H = (((A & 0xF) + (byte & 0xF) + oc) & 0x10) == 0x10; \
     A += byte + oc; \
@@ -724,8 +721,7 @@ struct instr_t instructions[512] = {
     F_N = 1; \
     return 8;
 #define SUB_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = (A < byte); \
     F_H = ((A & 0xF) < (byte & 0xF)); \
     A -= byte; \
@@ -751,8 +747,7 @@ struct instr_t instructions[512] = {
     F_N = 1; \
     return 8;
 #define SBC_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     u8 oc = F_C; \
     F_C = (A < (byte + oc)); \
     F_H = ((A & 0xF) < ((byte & 0xF) + oc)); \
@@ -771,8 +766,7 @@ struct instr_t instructions[512] = {
     return 8;
 
 #define LD_R_U8(reg) \
-    reg = READ8(PC); \
-    PC++; \
+    reg = READ8(PC++); \
     return 8;
 #define LD_R_R(reg1, reg2) \
     reg1 = reg2; \
@@ -801,25 +795,21 @@ struct instr_t instructions[512] = {
     A = READ8(0xFF00 + C); \
     return 8;
 #define LD_XU8_A() \
-    WRITE8(0xFF00 + READ8(PC), A); \
-    PC++; \
+    WRITE8(0xFF00 + READ8(PC++), A); \
     return 12;
 #define LD_A_XU8() \
-    A = READ8(0xFF00 + READ8(PC)); \
-    PC++; \
+    A = READ8(0xFF00 + READ8(PC++)); \
     return 12;
 
 #define LD_XR16_U8(r16) \
-    WRITE8(r16, READ8(PC)); \
-    PC++; \
+    WRITE8(r16, READ8(PC++)); \
     return 12;
 #define LD_XU16_SP() \
     WRITE16(READ16(PC), SP); \
     PC += 2; \
     return 20;
 #define LD_HL_SP_S8() \
-    s8 s = READ8(PC); \
-    PC++; \
+    s8 s = READ8(PC++); \
     F_C = (((SP & 0xFF) + (u8)s) & 0x100) == 0x100; \
     F_H = (((SP & 0xF) + (u8)(s & 0xF)) & 0x10) == 0x10; \
     HL = SP + s; \
@@ -891,13 +881,11 @@ struct instr_t instructions[512] = {
 
 // Relative jumps
 #define JR_S8() \
-    s8 ofs = READ8(PC); \
-    PC++; \
+    s8 ofs = READ8(PC++); \
     PC += ofs; \
     return 12;
 #define JRZ_S8() \
-    s8 ofs = READ8(PC); \
-    PC++; \
+    s8 ofs = READ8(PC++); \
     if(F_Z) { \
         PC += ofs; \
         return 12; \
@@ -905,8 +893,7 @@ struct instr_t instructions[512] = {
         return 8; \
     }
 #define JRC_S8() \
-    s8 ofs = READ8(PC); \
-    PC++; \
+    s8 ofs = READ8(PC++); \
     if(F_C) { \
         PC += ofs; \
         return 12; \
@@ -914,8 +901,7 @@ struct instr_t instructions[512] = {
         return 8; \
     }
 #define JRNZ_S8() \
-    s8 ofs = READ8(PC); \
-    PC++; \
+    s8 ofs = READ8(PC++); \
     if(!F_Z) { \
         PC += ofs; \
         return 12; \
@@ -923,8 +909,7 @@ struct instr_t instructions[512] = {
         return 8; \
     }
 #define JRNC_S8() \
-    s8 ofs = READ8(PC); \
-    PC++; \
+    s8 ofs = READ8(PC++); \
     if(!F_C) { \
         PC += ofs; \
         return 12; \
@@ -935,20 +920,16 @@ struct instr_t instructions[512] = {
 // Calls
 #define CALL() \
     u16 nextInstrAddr = PC + 2; \
-    WRITE8(SP - 1, (nextInstrAddr & 0xFF00) >> 8); \
-    WRITE8(SP - 2, nextInstrAddr & 0xFF); \
-    u16 addr = READ16(PC); \
-    PC = addr; \
-    SP -= 2; \
+    WRITE8(--SP, nextInstrAddr >> 8); \
+    WRITE8(--SP, nextInstrAddr & 0xFF); \
+    PC = READ16(PC); \
     return 24;
 #define CALLZ() \
     if(F_Z) { \
         u16 nextInstrAddr = PC + 2; \
-        WRITE8(SP - 1, (nextInstrAddr & 0xFF00) >> 8); \
-        WRITE8(SP - 2, nextInstrAddr & 0xFF); \
-        u16 addr = READ16(PC); \
-        PC = addr; \
-        SP -= 2; \
+        WRITE8(--SP, nextInstrAddr >> 8); \
+        WRITE8(--SP, nextInstrAddr & 0xFF); \
+        PC = READ16(PC); \
         return 24; \
     } else { \
         PC += 2; \
@@ -957,11 +938,9 @@ struct instr_t instructions[512] = {
 #define CALLC() \
     if(F_C) { \
         u16 nextInstrAddr = PC + 2; \
-        WRITE8(SP - 1, (nextInstrAddr & 0xFF00) >> 8); \
-        WRITE8(SP - 2, nextInstrAddr & 0xFF); \
-        u16 addr = READ16(PC); \
-        PC = addr; \
-        SP -= 2; \
+        WRITE8(--SP, nextInstrAddr >> 8); \
+        WRITE8(--SP, nextInstrAddr & 0xFF); \
+        PC = READ16(PC); \
         return 24; \
     } else { \
         PC += 2; \
@@ -970,11 +949,9 @@ struct instr_t instructions[512] = {
 #define CALLNZ() \
     if(!F_Z) { \
         u16 nextInstrAddr = PC + 2; \
-        WRITE8(SP - 1, (nextInstrAddr & 0xFF00) >> 8); \
-        WRITE8(SP - 2, nextInstrAddr & 0xFF); \
-        u16 addr = READ16(PC); \
-        PC = addr; \
-        SP -= 2; \
+        WRITE8(--SP, nextInstrAddr >> 8); \
+        WRITE8(--SP, nextInstrAddr & 0xFF); \
+        PC = READ16(PC); \
         return 24; \
     } else { \
         PC += 2; \
@@ -983,11 +960,9 @@ struct instr_t instructions[512] = {
 #define CALLNC() \
     if(!F_C) { \
         u16 nextInstrAddr = PC + 2; \
-        WRITE8(SP - 1, (nextInstrAddr & 0xFF00) >> 8); \
-        WRITE8(SP - 2, nextInstrAddr & 0xFF); \
-        u16 addr = READ16(PC); \
-        PC = addr; \
-        SP -= 2; \
+        WRITE8(--SP, nextInstrAddr >> 8); \
+        WRITE8(--SP, nextInstrAddr & 0xFF); \
+        PC = READ16(PC); \
         return 24; \
     } else { \
         PC += 2; \
@@ -1039,9 +1014,8 @@ struct instr_t instructions[512] = {
 
 // Push/pop
 #define PUSH(reg) \
-    WRITE8(SP - 1, reg >> 8); \
-    WRITE8(SP - 2, reg & 0xFF); \
-    SP -= 2; \
+    WRITE8(--SP, reg >> 8); \
+    WRITE8(--SP, reg & 0xFF); \
     return 16;
 #define POP(reg) \
     reg = (READ8(SP) | (READ8(SP + 1) << 8)); \
@@ -1107,7 +1081,7 @@ struct instr_t instructions[512] = {
     F_H = 0; \
     return 4;
 #define CCF() \
-    F_C = ~F_C; \
+    F_C = !F_C; \
     F_N = 0; \
     F_H = 0; \
     return 4;
@@ -1129,8 +1103,7 @@ struct instr_t instructions[512] = {
     F_N = 0; \
     return 8;
 #define AND_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = 0; \
     F_H = 1; \
     A &= byte; \
@@ -1155,8 +1128,7 @@ struct instr_t instructions[512] = {
     F_N = 0; \
     return 8;
 #define XOR_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = 0; \
     F_H = 0; \
     A ^= byte; \
@@ -1181,8 +1153,7 @@ struct instr_t instructions[512] = {
     F_N = 0; \
     return 8;
 #define OR_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = 0; \
     F_H = 0; \
     A |= byte; \
@@ -1205,8 +1176,7 @@ struct instr_t instructions[512] = {
     F_N = 1; \
     return 8;
 #define CP_U8() \
-    u8 byte = READ8(PC); \
-    PC++; \
+    u8 byte = READ8(PC++); \
     F_C = (A < byte); \
     F_H = ((A & 0xF) < (byte & 0xF)); \
     F_Z = (A - byte) == 0; \
@@ -1508,7 +1478,7 @@ int execute_CB(struct cpu* cpu, u8 opcode) {
         case 0x38: { SRL(B);    } case 0x39: { SRL(C);    } case 0x3A: { SRL(D);    } case 0x3B: { SRL(E);    } case 0x3C: { SRL(H);    } case 0x3D: { SRL(L);    } case 0x3E: { SRL_HL();  } case 0x3F: { SRL(A);    }
         case 0x40: { BIT(0, B); } case 0x41: { BIT(0, C); } case 0x42: { BIT(0, D); } case 0x43: { BIT(0, E); } case 0x44: { BIT(0, H); } case 0x45: { BIT(0, L); } case 0x46: { BIT_HL(0); } case 0x47: { BIT(0, A); }
         case 0x48: { BIT(1, B); } case 0x49: { BIT(1, C); } case 0x4A: { BIT(1, D); } case 0x4B: { BIT(1, E); } case 0x4C: { BIT(1, H); } case 0x4D: { BIT(1, L); } case 0x4E: { BIT_HL(1); } case 0x4F: { BIT(1, A); }
-        case 0x50: { BIT(0, B); } case 0x51: { BIT(2, C); } case 0x52: { BIT(2, D); } case 0x53: { BIT(2, E); } case 0x54: { BIT(2, H); } case 0x55: { BIT(2, L); } case 0x56: { BIT_HL(2); } case 0x57: { BIT(2, A); }
+        case 0x50: { BIT(2, B); } case 0x51: { BIT(2, C); } case 0x52: { BIT(2, D); } case 0x53: { BIT(2, E); } case 0x54: { BIT(2, H); } case 0x55: { BIT(2, L); } case 0x56: { BIT_HL(2); } case 0x57: { BIT(2, A); }
         case 0x58: { BIT(3, B); } case 0x59: { BIT(3, C); } case 0x5A: { BIT(3, D); } case 0x5B: { BIT(3, E); } case 0x5C: { BIT(3, H); } case 0x5D: { BIT(3, L); } case 0x5E: { BIT_HL(3); } case 0x5F: { BIT(3, A); }
         case 0x60: { BIT(4, B); } case 0x61: { BIT(4, C); } case 0x62: { BIT(4, D); } case 0x63: { BIT(4, E); } case 0x64: { BIT(4, H); } case 0x65: { BIT(4, L); } case 0x66: { BIT_HL(4); } case 0x67: { BIT(4, A); }
         case 0x68: { BIT(5, B); } case 0x69: { BIT(5, C); } case 0x6A: { BIT(5, D); } case 0x6B: { BIT(5, E); } case 0x6C: { BIT(5, H); } case 0x6D: { BIT(5, L); } case 0x6E: { BIT_HL(5); } case 0x6F: { BIT(5, A); }
@@ -1516,7 +1486,7 @@ int execute_CB(struct cpu* cpu, u8 opcode) {
         case 0x78: { BIT(7, B); } case 0x79: { BIT(7, C); } case 0x7A: { BIT(7, D); } case 0x7B: { BIT(7, E); } case 0x7C: { BIT(7, H); } case 0x7D: { BIT(7, L); } case 0x7E: { BIT_HL(7); } case 0x7F: { BIT(7, A); }
         case 0x80: { RES(0, B); } case 0x81: { RES(0, C); } case 0x82: { RES(0, D); } case 0x83: { RES(0, E); } case 0x84: { RES(0, H); } case 0x85: { RES(0, L); } case 0x86: { RES_HL(0); } case 0x87: { RES(0, A); }
         case 0x88: { RES(1, B); } case 0x89: { RES(1, C); } case 0x8A: { RES(1, D); } case 0x8B: { RES(1, E); } case 0x8C: { RES(1, H); } case 0x8D: { RES(1, L); } case 0x8E: { RES_HL(1); } case 0x8F: { RES(1, A); }
-        case 0x90: { RES(0, B); } case 0x91: { RES(2, C); } case 0x92: { RES(2, D); } case 0x93: { RES(2, E); } case 0x94: { RES(2, H); } case 0x95: { RES(2, L); } case 0x96: { RES_HL(2); } case 0x97: { RES(2, A); }
+        case 0x90: { RES(2, B); } case 0x91: { RES(2, C); } case 0x92: { RES(2, D); } case 0x93: { RES(2, E); } case 0x94: { RES(2, H); } case 0x95: { RES(2, L); } case 0x96: { RES_HL(2); } case 0x97: { RES(2, A); }
         case 0x98: { RES(3, B); } case 0x99: { RES(3, C); } case 0x9A: { RES(3, D); } case 0x9B: { RES(3, E); } case 0x9C: { RES(3, H); } case 0x9D: { RES(3, L); } case 0x9E: { RES_HL(3); } case 0x9F: { RES(3, A); }
         case 0xA0: { RES(4, B); } case 0xA1: { RES(4, C); } case 0xA2: { RES(4, D); } case 0xA3: { RES(4, E); } case 0xA4: { RES(4, H); } case 0xA5: { RES(4, L); } case 0xA6: { RES_HL(4); } case 0xA7: { RES(4, A); }
         case 0xA8: { RES(5, B); } case 0xA9: { RES(5, C); } case 0xAA: { RES(5, D); } case 0xAB: { RES(5, E); } case 0xAC: { RES(5, H); } case 0xAD: { RES(5, L); } case 0xAE: { RES_HL(5); } case 0xAF: { RES(5, A); }
@@ -1524,7 +1494,7 @@ int execute_CB(struct cpu* cpu, u8 opcode) {
         case 0xB8: { RES(7, B); } case 0xB9: { RES(7, C); } case 0xBA: { RES(7, D); } case 0xBB: { RES(7, E); } case 0xBC: { RES(7, H); } case 0xBD: { RES(7, L); } case 0xBE: { RES_HL(7); } case 0xBF: { RES(7, A); }
         case 0xC0: { SET(0, B); } case 0xC1: { SET(0, C); } case 0xC2: { SET(0, D); } case 0xC3: { SET(0, E); } case 0xC4: { SET(0, H); } case 0xC5: { SET(0, L); } case 0xC6: { SET_HL(0); } case 0xC7: { SET(0, A); }
         case 0xC8: { SET(1, B); } case 0xC9: { SET(1, C); } case 0xCA: { SET(1, D); } case 0xCB: { SET(1, E); } case 0xCC: { SET(1, H); } case 0xCD: { SET(1, L); } case 0xCE: { SET_HL(1); } case 0xCF: { SET(1, A); }
-        case 0xD0: { SET(0, B); } case 0xD1: { SET(2, C); } case 0xD2: { SET(2, D); } case 0xD3: { SET(2, E); } case 0xD4: { SET(2, H); } case 0xD5: { SET(2, L); } case 0xD6: { SET_HL(2); } case 0xD7: { SET(2, A); }
+        case 0xD0: { SET(2, B); } case 0xD1: { SET(2, C); } case 0xD2: { SET(2, D); } case 0xD3: { SET(2, E); } case 0xD4: { SET(2, H); } case 0xD5: { SET(2, L); } case 0xD6: { SET_HL(2); } case 0xD7: { SET(2, A); }
         case 0xD8: { SET(3, B); } case 0xD9: { SET(3, C); } case 0xDA: { SET(3, D); } case 0xDB: { SET(3, E); } case 0xDC: { SET(3, H); } case 0xDD: { SET(3, L); } case 0xDE: { SET_HL(3); } case 0xDF: { SET(3, A); }
         case 0xE0: { SET(4, B); } case 0xE1: { SET(4, C); } case 0xE2: { SET(4, D); } case 0xE3: { SET(4, E); } case 0xE4: { SET(4, H); } case 0xE5: { SET(4, L); } case 0xE6: { SET_HL(4); } case 0xE7: { SET(4, A); }
         case 0xE8: { SET(5, B); } case 0xE9: { SET(5, C); } case 0xEA: { SET(5, D); } case 0xEB: { SET(5, E); } case 0xEC: { SET(5, H); } case 0xED: { SET(5, L); } case 0xEE: { SET_HL(5); } case 0xEF: { SET(5, A); }

@@ -5,14 +5,17 @@
 
 #include "cpu.h"
 #include "ppu.h"
+#include "mbc.h"
 
 
 void gb_init(struct gb* gb) {
 
     printf("Initializing GB...\n");
     
+    initMBCs();
+
     gb_init_mmap(gb);
-    gb->rom = NULL;
+    gb->cart.rom = NULL;
 
     gb->cpu = (struct cpu*) malloc(sizeof(struct cpu));
     cpu_init(gb->cpu, gb);
@@ -20,6 +23,7 @@ void gb_init(struct gb* gb) {
     ppu_init(gb->ppu, gb);
 
     gb->keysPressed = 0xFF;
+    gb->inBootrom = true;
 }
 
 int gb_run(struct gb* gb, bool* stopped, bool* frameCompleted) {
@@ -50,8 +54,8 @@ void gb_destroy(struct gb* gb) {
     cpu_destroy(gb->cpu);
     free(gb->cpu);
     free(gb->mmap);
-    if(gb->rom)
-        free(gb->rom);
+    free(gb->cart.rom);
+    free(gb->bootrom);
 }
 
 void gb_init_mmap(struct gb* gb) {
@@ -60,7 +64,9 @@ void gb_init_mmap(struct gb* gb) {
 }
 
 void gb_readBootrom(struct gb* gb, FILE* bootrom) {
-    fread(gb->mmap, 1, 256, bootrom);
+    
+    gb->bootrom = (u8*) malloc(0x100);
+    fread(gb->bootrom, 1, 0x100, bootrom);
 }
 
 void gb_readRom(struct gb* gb, FILE* rom) {
@@ -68,25 +74,27 @@ void gb_readRom(struct gb* gb, FILE* rom) {
     long size = ftell(rom);
     rewind(rom);
 
-    gb->rom = (u8*) malloc(size);
-    fread(gb->rom, 1, size, rom);
+    gb->cart.rom = (u8*) malloc(size);
+    fread(gb->cart.rom, 1, size, rom);
 
     rewind(rom);
-    fseek(rom, 256L, SEEK_SET);
 
-    int bytes_to_copy = (size < (0x8000 - 256))? size : 0x8000 - 256;
-    fread(gb->mmap + 0x100, 1, bytes_to_copy, rom);
+    int bytes_to_copy = (size < 0x8000)? size : 0x8000;
+    fread(gb->mmap, 1, bytes_to_copy, rom);
+
+    // Read cartridge header
+    gb->cart.mbc = gb->cart.rom[0x147];
+    printf("ROM size: %ld, MBC: %02X\n", size, gb->cart.mbc);
+    if(gb->cart.mbc > 1) {
+        printf("Warning: Unsupported MBC %02X. Using MBC 1!\n", gb->cart.mbc);
+        gb->cart.mbc = 1;
+    }
+    mbcs[gb->cart.mbc].rom = gb->cart.rom;
 }
 
 void gb_disable_bootrom(struct gb* gb) {
-    if(gb->rom == NULL) {
-        printf("Attempting to reload ROM zeropage but ROM is NULL!\n");
-        return;
-    }
-    printf("Disabling bootrom and reloading ROM zeropage!\n");
-    for(u16 i = 0x0000; i < 0x0100; i++) {
-        gb->mmap[i] = gb->rom[i];
-    }
+    printf("Disabling bootrom!\n");
+    gb->inBootrom = false;
 }
 
 void gb_dma(struct gb* gb) {
@@ -119,6 +127,14 @@ u8* gb_get_mmap_ptr(struct gb* gb, u16 addr) {
 }
 
 u8 gb_read8(struct gb* gb, u16 addr) {
+    if(addr < 0x100 && gb->inBootrom) {
+        return gb->bootrom[addr];
+    }
+    else if(addr < 0x8000) {
+        struct mbc* mbc = &mbcs[gb->cart.mbc];
+        return mbc->read8(mbc, addr);
+    }
+    
     if(addr == 0xFF00) {
         u8 p1 = gb->mmap[addr];
         u8 selections = p1 & 0x30;
@@ -139,8 +155,8 @@ u8 gb_read8(struct gb* gb, u16 addr) {
 
 void gb_write8(struct gb* gb, u16 addr, u8 byte) {
     if(addr < 0x8000) {
-        printf("Write to ROM address %04X, value %02X\n", addr, byte);
-        return;
+        struct mbc* mbc = &mbcs[gb->cart.mbc];
+        return mbc->write8(mbc, addr, byte);
     }
 
     gb->mmap[addr] = byte;
@@ -148,20 +164,27 @@ void gb_write8(struct gb* gb, u16 addr, u8 byte) {
     if(addr == 0xFF46) {
         gb_schedule_dma(gb, byte);
     }
-
     if(addr == 0xFF50 && byte == 0x1) {
         gb_disable_bootrom(gb);
     }
 }
 
 u16 gb_read16(struct gb* gb, u16 addr) {
+    if(addr < 0x100 && gb->inBootrom) {
+        return (gb->bootrom[addr + 1] << 8) | gb->bootrom[addr];
+    }
+    else if(addr < 0x8000) {
+        struct mbc* mbc = &mbcs[gb->cart.mbc];
+        return mbc->read16(mbc, addr);
+    }
+
     return (gb->mmap[addr + 1] << 8) | gb->mmap[addr];
 }
 
 void gb_write16(struct gb* gb, u16 addr, u16 word) {
     if(addr < 0x8000) {
-        printf("Write16 to ROM address %04X, value %04X\n", addr, word);
-        return;
+        struct mbc* mbc = &mbcs[gb->cart.mbc];
+        return mbc->write16(mbc, addr, word);
     }
     gb->mmap[addr] = word & 0xFF;
     gb->mmap[addr + 1] = word >> 8;

@@ -33,10 +33,16 @@ struct gb {
     struct ppu* ppu;
 
     u8* mmap;
-    u8* rom;
+    u8* bootrom;
+    
+    struct cart_t {
+        u8* rom;
+        u8 mbc;
+    } cart;
 
     u8 keysPressed;
 
+    bool inBootrom;
     bool dmaScheduled;
     bool inDMA;
     int dmaCycles;

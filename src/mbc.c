@@ -3,7 +3,7 @@
 
 #include "mbc.h"
 
-struct mbc mbcs[2];
+struct mbc mbcs[4];
 
 void initMBCs() {
     memset(mbcs[0].regs, 0x00, 4);
@@ -18,6 +18,12 @@ void initMBCs() {
     mbcs[1].write16 = &mbc1_write16;
     mbcs[1].read8 = &mbc1_read8;
     mbcs[1].read16 = &mbc1_read16;
+
+    memset(mbcs[3].regs, 0x00, 4);
+    mbcs[3].write8 = &mbc3_write8;
+    mbcs[3].write16 = &mbc3_write16;
+    mbcs[3].read8 = &mbc3_read8;
+    mbcs[3].read16 = &mbc3_read16;
 }
 
 /***********
@@ -81,11 +87,9 @@ void mbc1_write8(struct cart_t* cart, u16 addr, u8 v) {
         cart->mbc->regs[MBC1_ROMBANK] = bank;
     }
     else if(addr >= 0x4000 && addr < 0x6000) {
-        if(cart->romSize < 5 && cart->ramSize < 3) {
-            // If ROM size is less than 1MB and RAM
-            // size is less than 32KB then do nothing
-            return;
-        } else {
+        // Only modify this register if we have
+        // enough ROM size or RAM size
+        if(cart->romSize >= 5 || cart->ramSize == 3) {
             cart->mbc->regs[MBC1_RAMBANK] = v & 0x3;
         }
     }
@@ -123,6 +127,64 @@ u16 mbc1_read16(struct cart_t* cart, u16 addr) {
     }
     else if(addr >= 0x4000 && addr < 0x8000) {
         u8 bank = cart->mbc->regs[MBC1_ROMBANK];
+        u32 offs = bank * 0x4000 + (addr - 0x4000);
+
+        if(addr == 0x7FFF) {
+            printf("MBC1: Reading 16-bit value at the edge of a bank. Using 0xFF as the top byte!\n");
+            topByte = 0xFF;
+        } else {
+            topByte = cart->rom[offs + 1];
+        }
+        bottomByte = cart->rom[offs];
+    }
+
+    return bottomByte | (topByte << 8);
+}
+
+/***********
+ ** MBC 3 **
+************/
+void mbc3_write8(struct cart_t* cart, u16 addr, u8 v) {
+    if(addr >= 0x2000 && addr < 0x4000) {
+        u8 bank = v & 0x7F;
+        if(bank == 0x00)
+            bank++;
+        cart->mbc->regs[MBC3_ROMBANK] = bank;
+    }
+}
+
+void mbc3_write16(struct cart_t* cart, u16 addr, u16 v) {
+    return;
+}
+
+u8 mbc3_read8(struct cart_t* cart, u16 addr) {
+    addr &= 0x7FFF;
+    if(addr >= 0x0000 && addr < 0x4000) {
+        return cart->rom[addr];
+    }
+    else if(addr >= 0x4000 && addr < 0x8000) {
+        u8 bank = cart->mbc->regs[MBC3_ROMBANK];
+        u32 offs = bank * 0x4000 + (addr - 0x4000);
+        return cart->rom[offs];
+    }
+    return 0xFF;
+}
+
+u16 mbc3_read16(struct cart_t* cart, u16 addr) {
+    addr &= 0x7FFF;
+    u8 topByte = 0x00;
+    u8 bottomByte = 0x00;
+    if(addr >= 0x0000 && addr < 0x4000) {
+        if(addr == 0x3FFF) {
+            printf("MBC1: Reading 16-bit value at the edge of a bank. Using 0xFF as the top byte!\n");
+            topByte = 0xFF;
+        } else {
+            topByte = cart->rom[addr + 1];
+        }
+        bottomByte = cart->rom[addr];
+    }
+    else if(addr >= 0x4000 && addr < 0x8000) {
+        u8 bank = cart->mbc->regs[MBC3_ROMBANK];
         u32 offs = bank * 0x4000 + (addr - 0x4000);
 
         if(addr == 0x7FFF) {

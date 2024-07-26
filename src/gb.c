@@ -85,11 +85,21 @@ void gb_readRom(struct gb* gb, FILE* rom) {
     // Read cartridge header
     gb->cart.mbcCode = gb->cart.rom[0x147];
     printf("ROM size: %ld, MBC: %02X\n", size, gb->cart.mbcCode);
-    if(gb->cart.mbcCode > 1) {
-        printf("Warning: Unsupported MBC %02X. Using MBC 1!\n", gb->cart.mbcCode);
-        gb->cart.mbcCode = 1;
+    switch(gb->cart.mbcCode) {
+        case 0x00:
+            gb->cart.mbc = &mbcs[0];
+            break;
+        case 0x01:
+            gb->cart.mbc = &mbcs[1];
+            break;
+        case 0x03:
+        case 0x13:
+            gb->cart.mbc = &mbcs[3];
+            break;
+        default:
+            printf("Warning: Unsupported MBC %02X. Using MBC 1!\n", gb->cart.mbcCode);
+            gb->cart.mbc = &mbcs[1];
     }
-    gb->cart.mbc = &mbcs[gb->cart.mbcCode];
 
     // ROM size in KB is 32 * (1 << n),
     // where n is rom[0x148]

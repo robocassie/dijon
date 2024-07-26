@@ -10,7 +10,7 @@ extern struct mbc {
     void (*write16)(struct cart_t*, u16, u16);
     u8   (*read8)(struct cart_t*, u16);
     u16  (*read16)(struct cart_t*, u16);
-} mbcs[2];
+} mbcs[4];
 
 struct cart_t {
     u8* rom;
@@ -36,3 +36,10 @@ void mbc1_write8(struct cart_t* cart, u16 addr, u8 v);
 void mbc1_write16(struct cart_t* cart, u16 addr, u16 v);
 u8   mbc1_read8(struct cart_t* cart, u16 addr);
 u16  mbc1_read16(struct cart_t* cart, u16 addr);
+
+// TODO: More registers
+#define MBC3_ROMBANK    0
+void mbc3_write8(struct cart_t* cart, u16 addr, u8 v);
+void mbc3_write16(struct cart_t* cart, u16 addr, u16 v);
+u8   mbc3_read8(struct cart_t* cart, u16 addr);
+u16  mbc3_read16(struct cart_t* cart, u16 addr);

@@ -79,7 +79,7 @@ void sdlctx_renderBGMapWindow(struct sdlctx* ctx, struct gb* gb) {
     SDL_LockSurface(ctx->windows[WINDOW_BGMAP].surface);
 
     u16 bgMapStart = (gb->ppu->lcdc->bgMapArea == 0)? 0x9800 : 0x9C00;
-    u16 bgTilesStart = (gb->ppu->lcdc->bgTilesArea == 0)? 0x8800 : 0x8000;
+    u16 bgTilesOffset = (gb->ppu->lcdc->bgTilesArea == 0)? 0x9000 : 0x8000;
 
     for(int y = 0; y < gBGMapWindowH; y++) {
         for(int x = 0; x < gBGMapWindowW; x++) {
@@ -90,9 +90,11 @@ void sdlctx_renderBGMapWindow(struct sdlctx* ctx, struct gb* gb) {
             int xPixel = x % 8;
             int yPixel = y % 8;
             u16 bgMapOffset = (bgMapY * 32) + bgMapX;
-            u8 tileId = gb_read8(gb, bgMapStart + bgMapOffset);
-            u16 bgTilesOffset = tileId * 16;
-            u16 tileLineOffset = bgTilesStart + bgTilesOffset + (yPixel * 2);
+
+            s8 tileId = (s8) gb_read8(gb, bgMapStart + bgMapOffset);
+            u16 bgTileAddr = (gb->ppu->lcdc->bgTilesArea)? (bgTilesOffset + ((u8)tileId * 16)) : (bgTilesOffset + (tileId * 16));
+            u16 tileLineOffset = bgTileAddr + (yPixel * 2);
+
             u8 tileLineBytes[2] = { gb_read8(gb, tileLineOffset), gb_read8(gb, tileLineOffset + 1) };
             u8 pixelBitMask = (1 << (7 - xPixel));
             u8 colorHigh = (tileLineBytes[1] & pixelBitMask) >> (7 - xPixel);

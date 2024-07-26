@@ -156,13 +156,11 @@ void ppu_scanline(struct ppu* ppu)  {
         if(bgMapOffset >= 0x400) {
             printf("Warning: BG Map offset %#04x is out of range!\n", bgMapOffset);
         }
-        u8 tileId = gb_read8(ppu->gb, bgMapStart + bgMapOffset);
-        u16 bgTilesStart = (ppu->lcdc->bgTilesArea)? 0x8000 : 0x8800;
-        u16 bgTilesOffset = tileId * 16;
-        if(bgTilesOffset >= 0x1000) {
-            printf("Warning: BG Tile offset %#04x is out of range!\n", bgTilesOffset);
-        }
-        u16 tileLineOffset = bgTilesStart + bgTilesOffset + (yPixel * 2);
+        s8 tileId = (s8) gb_read8(ppu->gb, bgMapStart + bgMapOffset);
+        u16 bgTilesOffset = (ppu->lcdc->bgTilesArea)? 0x8000 : 0x9000;
+        u16 bgTileAddr = (ppu->lcdc->bgTilesArea)? (bgTilesOffset + ((u8)tileId * 16)) : (bgTilesOffset + (tileId * 16));
+
+        u16 tileLineOffset = bgTileAddr + (yPixel * 2);
         
         u8 lineBytes[2] = { gb_read8(ppu->gb, tileLineOffset), gb_read8(ppu->gb, tileLineOffset + 1) };
         u8 pixelBitMask = (1 << (7 - xPixel));

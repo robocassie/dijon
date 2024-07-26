@@ -2,6 +2,7 @@
 #include <stdio.h>
 
 #include "common.h"
+#include "mbc.h"
 
 struct cpu;
 struct ppu;
@@ -34,11 +35,8 @@ struct gb {
 
     u8* mmap;
     u8* bootrom;
-    
-    struct cart_t {
-        u8* rom;
-        u8 mbc;
-    } cart;
+
+    struct cart_t cart;
 
     u8 keysPressed;
 

@@ -83,13 +83,18 @@ void gb_readRom(struct gb* gb, FILE* rom) {
     fread(gb->mmap, 1, bytes_to_copy, rom);
 
     // Read cartridge header
-    gb->cart.mbc = gb->cart.rom[0x147];
-    printf("ROM size: %ld, MBC: %02X\n", size, gb->cart.mbc);
-    if(gb->cart.mbc > 1) {
-        printf("Warning: Unsupported MBC %02X. Using MBC 1!\n", gb->cart.mbc);
-        gb->cart.mbc = 1;
+    gb->cart.mbcCode = gb->cart.rom[0x147];
+    printf("ROM size: %ld, MBC: %02X\n", size, gb->cart.mbcCode);
+    if(gb->cart.mbcCode > 1) {
+        printf("Warning: Unsupported MBC %02X. Using MBC 1!\n", gb->cart.mbcCode);
+        gb->cart.mbcCode = 1;
     }
-    mbcs[gb->cart.mbc].rom = gb->cart.rom;
+    gb->cart.mbc = &mbcs[gb->cart.mbcCode];
+
+    // ROM size in KB is 32 * (1 << n),
+    // where n is rom[0x148]
+    gb->cart.romSize = gb->cart.rom[0x148];
+    gb->cart.ramSize = gb->cart.rom[0x149];
 }
 
 void gb_disable_bootrom(struct gb* gb) {
@@ -122,6 +127,7 @@ void gb_schedule_dma(struct gb* gb, u8 highByte) {
     }
 }
 
+// TODO: Remove this
 u8* gb_get_mmap_ptr(struct gb* gb, u16 addr) {
     return gb->mmap + addr;
 }
@@ -131,8 +137,7 @@ u8 gb_read8(struct gb* gb, u16 addr) {
         return gb->bootrom[addr];
     }
     else if(addr < 0x8000) {
-        struct mbc* mbc = &mbcs[gb->cart.mbc];
-        return mbc->read8(mbc, addr);
+        return gb->cart.mbc->read8(&gb->cart, addr);
     }
     
     if(addr == 0xFF00) {
@@ -155,8 +160,7 @@ u8 gb_read8(struct gb* gb, u16 addr) {
 
 void gb_write8(struct gb* gb, u16 addr, u8 byte) {
     if(addr < 0x8000) {
-        struct mbc* mbc = &mbcs[gb->cart.mbc];
-        return mbc->write8(mbc, addr, byte);
+        return gb->cart.mbc->write8(&gb->cart, addr, byte);
     }
 
     gb->mmap[addr] = byte;
@@ -174,8 +178,7 @@ u16 gb_read16(struct gb* gb, u16 addr) {
         return (gb->bootrom[addr + 1] << 8) | gb->bootrom[addr];
     }
     else if(addr < 0x8000) {
-        struct mbc* mbc = &mbcs[gb->cart.mbc];
-        return mbc->read16(mbc, addr);
+        return gb->cart.mbc->read16(&gb->cart, addr);
     }
 
     return (gb->mmap[addr + 1] << 8) | gb->mmap[addr];
@@ -183,8 +186,7 @@ u16 gb_read16(struct gb* gb, u16 addr) {
 
 void gb_write16(struct gb* gb, u16 addr, u16 word) {
     if(addr < 0x8000) {
-        struct mbc* mbc = &mbcs[gb->cart.mbc];
-        return mbc->write16(mbc, addr, word);
+        return gb->cart.mbc->write16(&gb->cart, addr, word);
     }
     gb->mmap[addr] = word & 0xFF;
     gb->mmap[addr + 1] = word >> 8;

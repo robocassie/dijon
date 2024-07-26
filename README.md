@@ -5,11 +5,6 @@ Complete with a BG Map viewer with scrolling viewport.
 
 Currently requires a GameBoy bootrom image. Tetris is the only game that boots without severe graphical errors.
 
-## Screenshots
-
-![bootrom](screenshots/bootrom.png)
-![tetris](screenshots/tetris.png)
-
 ## Building and running
 
 For macOS, [SDL2](https://www.libsdl.org/) is required. Then build with cmake from the platforms/macos folder.
@@ -22,3 +17,11 @@ icyboy <path_to_bootrom.bin> <path_to_rom.gb> [options]
 ```
 
 Where `[options]` can be `-v` to log every cpu instruction, and/or `-b` to pause execution after the bootrom.
+
+## Screenshots
+
+![bootrom](screenshots/bootrom.png)
+![tetris](screenshots/tetris.png)
+![pokegold](screenshots/pokegold.png)
+![yoshi](screenshots/yoshi.png)
+![drmario](screenshots/drmario.png)

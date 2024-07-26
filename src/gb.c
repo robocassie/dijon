@@ -86,14 +86,16 @@ void gb_readRom(struct gb* gb, FILE* rom) {
     gb->cart.mbcCode = gb->cart.rom[0x147];
     printf("ROM size: %ld, MBC: %02X\n", size, gb->cart.mbcCode);
     switch(gb->cart.mbcCode) {
-        case 0x00:
+        case 0x00: // No MBC
             gb->cart.mbc = &mbcs[0];
             break;
-        case 0x01:
+        case 0x01: // MBC1
             gb->cart.mbc = &mbcs[1];
             break;
-        case 0x03:
-        case 0x13:
+        case 0x03: // MBC3
+        case 0x10: // MBC3 + TIMER + RAM + BATTERY
+        case 0x13: // MBC3 + RAM + BATTERY
+        case 0x1B: // MBC5 + RAM + BATTERY
             gb->cart.mbc = &mbcs[3];
             break;
         default:

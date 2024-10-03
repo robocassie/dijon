@@ -39,8 +39,9 @@ void ppu_init(struct ppu* ppu, struct gb* gb) {
     *ppu->wy = 0x00;
     *ppu->wx = 0x00;
 
-    // Fill with white
-    memset(ppu->framebuffer, 0xFF, 160*144*4);
+    // Fill with gColors[0]
+    for(int i = 0; i < 160*144; i++)
+        ppu->framebuffer[i] = gColors[0];
 }
 
 bool ppu_run(struct ppu* ppu, int lastCpuCycles) {

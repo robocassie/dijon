@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "cpu.h"
 #include "ppu.h"
@@ -61,6 +62,8 @@ void gb_destroy(struct gb* gb) {
 void gb_init_mmap(struct gb* gb) {
 
     gb->mmap = (u8*) malloc(1024 * 64); // 64 KB of memory total
+
+    //memset(gb->mmap + 0x8000, 0x00, 0x2000);
 }
 
 void gb_readBootrom(struct gb* gb, FILE* bootrom) {
@@ -93,7 +96,7 @@ void gb_readRom(struct gb* gb, FILE* rom) {
             gb->cart.mbc = &mbcs[1];
             break;
         case 0x03: // MBC3
-        case 0x10: // MBC3 + TIMER + RAM + BATTERY
+        case 0x10: // MBC3 + RAM + BATTERY + TIMER
         case 0x13: // MBC3 + RAM + BATTERY
         case 0x1B: // MBC5 + RAM + BATTERY
             gb->cart.mbc = &mbcs[3];

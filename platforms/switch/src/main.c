@@ -13,7 +13,7 @@ struct sdlctx sdlctx;
 
 int main(int argc, char** argv) {
 
-    //consoleInit(NULL);
+    consoleInit(NULL);
     padConfigureInput(1, HidNpadStyleSet_NpadStandard);
 
     PadState pad;
@@ -53,39 +53,53 @@ int main(int argc, char** argv) {
     gb_readRom(&gb, rom);
     fclose(rom);
 
-    cpu_set_logging_enabled(gb.cpu, true);
-    // cpu_set_stop_at_bootrom(gb->cpu, true);
-
-    // Create the sdl context
+    // crashes
     if(sdlctx_init(&sdlctx) < 0) {
         gb_destroy(&gb);
-        return 1;
+        return 0;
     }
-    
-    bool sdlStopped = false;
-    bool gbStopped = false;
-    // Main loop
-    while(appletMainLoop() && !sdlStopped && !gbStopped) {
-        //consoleUpdate(NULL);
 
-        bool frameCompleted = false;
-        if(gb_run(&gb, &gbStopped, &frameCompleted) < 0) {
-            break;
-        }
-        sdlctx_update(&sdlctx, &sdlStopped, frameCompleted, &gb);
+    while(appletMainLoop()) {
+        consoleUpdate(NULL);
         padUpdate(&pad);
 
         u64 kDown = padGetButtonsDown(&pad);
         if (kDown & HidNpadButton_Plus) break;
     }
 
+    // cpu_set_logging_enabled(gb.cpu, true);
+    // // cpu_set_stop_at_bootrom(gb->cpu, true);
+
+    // // Create the sdl context
+    // if(sdlctx_init(&sdlctx) < 0) {
+    //     gb_destroy(&gb);
+    //     return 1;
+    // }
+    
+    // bool sdlStopped = false;
+    // bool gbStopped = false;
+    // // Main loop
+    // while(appletMainLoop() && !sdlStopped && !gbStopped) {
+    //     //consoleUpdate(NULL);
+
+    //     bool frameCompleted = false;
+    //     if(gb_run(&gb, &gbStopped, &frameCompleted) < 0) {
+    //         break;
+    //     }
+    //     sdlctx_update(&sdlctx, &sdlStopped, frameCompleted, &gb);
+    //     padUpdate(&pad);
+
+    //     u64 kDown = padGetButtonsDown(&pad);
+    //     if (kDown & HidNpadButton_Plus) break;
+    // }
+
     // Destroy the sdl context
-    sdlctx_destroy(&sdlctx);
+    // sdlctx_destroy(&sdlctx);
 
     // Destroy emulator instance
     gb_destroy(&gb);
 
-    //consoleExit(NULL);
+    consoleExit(NULL);
 
     return 0;
 }

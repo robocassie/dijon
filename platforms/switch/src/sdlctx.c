@@ -36,7 +36,7 @@ int sdlctx_init(struct sdlctx* ctx) {
         return -1;
     } else {
         u32 mainWindowFlags = 0;//SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP;
-        if(sdlctx_initWindow(ctx, WINDOW_MAIN, "IcyBoy", 0, 0, gMainWindowW, gMainWindowH, mainWindowFlags) < 0) {
+        if(sdlctx_initWindow(ctx, WINDOW_MAIN, "dijon", 0, 0, gMainWindowW, gMainWindowH, mainWindowFlags) < 0) {
             return -1;
         }
 
@@ -80,49 +80,49 @@ void sdlctx_renderMainWindow(struct sdlctx* ctx, u32* ppuFramebuffer) {
 
 void sdlctx_renderBGMapWindow(struct sdlctx* ctx, struct gb* gb) {
     
-    // SDL_LockSurface(ctx->windows[WINDOW_BGMAP].surface);
+    SDL_LockSurface(ctx->windows[WINDOW_BGMAP].surface);
 
-    // u16 bgMapStart = (gb->ppu->lcdc->bgMapArea == 0)? 0x9800 : 0x9C00;
-    // u16 bgTilesStart = (gb->ppu->lcdc->bgTilesArea == 0)? 0x8800 : 0x8000;
+    u16 bgMapStart = (gb->ppu->lcdc->bgMapArea == 0)? 0x9800 : 0x9C00;
+    u16 bgTilesStart = (gb->ppu->lcdc->bgTilesArea == 0)? 0x8800 : 0x8000;
 
-    // for(int y = 0; y < gBGMapWindowH; y++) {
-    //     for(int x = 0; x < gBGMapWindowW; x++) {
-    //         u8 scy = *gb->ppu->scy;
-    //         u8 scx = *gb->ppu->scx;
-    //         int bgMapX = x / 8;
-    //         int bgMapY = y / 8;
-    //         int xPixel = x % 8;
-    //         int yPixel = y % 8;
-    //         u16 bgMapOffset = (bgMapY * 32) + bgMapX;
-    //         u8 tileId = gb_read8(gb, bgMapStart + bgMapOffset);
-    //         u16 bgTilesOffset = tileId * 16;
-    //         u16 tileLineOffset = bgTilesStart + bgTilesOffset + (yPixel * 2);
-    //         u8 tileLineBytes[2] = { gb_read8(gb, tileLineOffset), gb_read8(gb, tileLineOffset + 1) };
-    //         u8 pixelBitMask = (1 << (7 - xPixel));
-    //         u8 colorHigh = (tileLineBytes[1] & pixelBitMask) >> (7 - xPixel);
-    //         u8 colorLow =  (tileLineBytes[0] & pixelBitMask) >> (7 - xPixel);
-    //         u8 internalColor = (colorHigh << 1) | colorLow;
-    //         u8 bgPalColor = (*gb->ppu->bgp >> (internalColor * 2)) & 0x3;
-    //         u32 finalColor = gColors[bgPalColor];
+    for(int y = 0; y < gBGMapWindowH; y++) {
+        for(int x = 0; x < gBGMapWindowW; x++) {
+            u8 scy = *gb->ppu->scy;
+            u8 scx = *gb->ppu->scx;
+            int bgMapX = x / 8;
+            int bgMapY = y / 8;
+            int xPixel = x % 8;
+            int yPixel = y % 8;
+            u16 bgMapOffset = (bgMapY * 32) + bgMapX;
+            u8 tileId = gb_read8(gb, bgMapStart + bgMapOffset);
+            u16 bgTilesOffset = tileId * 16;
+            u16 tileLineOffset = bgTilesStart + bgTilesOffset + (yPixel * 2);
+            u8 tileLineBytes[2] = { gb_read8(gb, tileLineOffset), gb_read8(gb, tileLineOffset + 1) };
+            u8 pixelBitMask = (1 << (7 - xPixel));
+            u8 colorHigh = (tileLineBytes[1] & pixelBitMask) >> (7 - xPixel);
+            u8 colorLow =  (tileLineBytes[0] & pixelBitMask) >> (7 - xPixel);
+            u8 internalColor = (colorHigh << 1) | colorLow;
+            u8 bgPalColor = (*gb->ppu->bgp >> (internalColor * 2)) & 0x3;
+            u32 finalColor = gColors[bgPalColor];
 
-    //         // 5 pixel border on all sides
-    //         int totalWidth = gBGMapWindowW + (gBGMapWindowBuffer * 2);
-    //         ctx->windows[WINDOW_BGMAP].framebuffer[((y + 5) * totalWidth) + x + 5] = finalColor;
+            // 5 pixel border on all sides
+            int totalWidth = gBGMapWindowW + (gBGMapWindowBuffer * 2);
+            ctx->windows[WINDOW_BGMAP].framebuffer[((y + 5) * totalWidth) + x + 5] = finalColor;
 
-    //         // Draw the red viewport
-    //         bool yWrapsAround = ((int)(scy) + 144) > 256;
-    //         bool xWrapsAround = ((int)(scx) + 160) > 256;
+            // Draw the red viewport
+            bool yWrapsAround = ((int)(scy) + 144) > 256;
+            bool xWrapsAround = ((int)(scx) + 160) > 256;
 
-    //         if(( (y == scy || y == (u8)(scy + 144)) && ((x >= scx && x < scx + 160) || (xWrapsAround && x < (u8)(scx + 160))) ) ||
-    //            ( (x == scx || x == (u8)(scx + 160)) && ((y >= scy && y < scy + 144) || (yWrapsAround && y < (u8)(scy + 144))) )
-    //         ) {
-    //             ctx->windows[WINDOW_BGMAP].framebuffer[((y + 5) * 266) + x + 5] = 0xFFFF0000;
-    //         }
-    //     }
-    // }
+            if(( (y == scy || y == (u8)(scy + 144)) && ((x >= scx && x < scx + 160) || (xWrapsAround && x < (u8)(scx + 160))) ) ||
+               ( (x == scx || x == (u8)(scx + 160)) && ((y >= scy && y < scy + 144) || (yWrapsAround && y < (u8)(scy + 144))) )
+            ) {
+                ctx->windows[WINDOW_BGMAP].framebuffer[((y + 5) * 266) + x + 5] = 0xFFFF0000;
+            }
+        }
+    }
 
-    // SDL_UnlockSurface(ctx->windows[WINDOW_BGMAP].surface);
-    // SDL_UpdateWindowSurface(ctx->windows[WINDOW_BGMAP].win);
+    SDL_UnlockSurface(ctx->windows[WINDOW_BGMAP].surface);
+    SDL_UpdateWindowSurface(ctx->windows[WINDOW_BGMAP].win);
 }
 
 void sdlctx_update(struct sdlctx* ctx, bool* stopped, bool completedFrame, struct gb* gb) {

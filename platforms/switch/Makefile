@@ -38,14 +38,14 @@ include $(DEVKITPRO)/libnx/switch_rules
 #   NACP building is skipped as well.
 #---------------------------------------------------------------------------------
 BUILD		:=	build
-TARGET		:=	$(BUILD)/icyboy
+TARGET		:=	$(BUILD)/dijon
 SOURCES		:=	src ../../src
 DATA		:=	data
 INCLUDES	:=	include ../../include
 ROMFS		:=
 
-APP_TITLE   := IcyBoy
-APP_AUTHOR  := avery
+APP_TITLE   := dijon
+APP_AUTHOR  := robocassie
 
 #---------------------------------------------------------------------------------
 # options for code generation

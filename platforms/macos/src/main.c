@@ -3,13 +3,13 @@
 
 #include "gb.h"
 #include "cpu.h"
-#include "sdlctx.h"
+#include "gui.h"
 
 
 int main(int argc, char** argv) {
 
     struct gb gb;
-    struct sdlctx sdlctx;
+    struct gui gui;
 
     if(argc < 2) {
         printf("You must include a bootrom PATH in the arguments!\n");
@@ -64,8 +64,8 @@ int main(int argc, char** argv) {
         }
     }
 
-    // Create the sdl context
-    if(sdlctx_init(&sdlctx) < 0) {
+    // Create the gui
+    if(gui_init(&gui) < 0) {
         gb_destroy(&gb);
         return 1;
     }
@@ -78,12 +78,11 @@ int main(int argc, char** argv) {
         if(gb_run(&gb, &gbStopped, &frameCompleted) < 0) {
             break;
         }
-        sdlctx_update(&sdlctx, &sdlStopped, frameCompleted, &gb);
+        gui_update(&gui, &gb, &sdlStopped, frameCompleted);
     }
 
-    // Destroy the sdl context
-    sdlctx_destroy(&sdlctx);
-
+    // Destroy the gui
+    gui_destroy(&gui);
     // Destroy emulator instance
     gb_destroy(&gb);
 

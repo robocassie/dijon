@@ -1,9 +1,9 @@
-# icyboy
+# dijon
 A GameBoy emulator for macOS and Nintendo Switch (WIP), written in C.
 
 Complete with a BG Map viewer with scrolling viewport.
 
-Currently requires a GameBoy bootrom image. Tetris is the only game that boots without severe graphical errors.
+Currently requires a GameBoy bootrom image.
 
 ## Building and running
 
@@ -13,7 +13,7 @@ For Switch, [devkitpro](https://devkitpro.org/) is required. Build with make fro
 
 To run:
 ```
-icyboy <path_to_bootrom.bin> <path_to_rom.gb> [options]
+dijon <path_to_bootrom.bin> <path_to_rom.gb> [options]
 ```
 
 Where `[options]` can be `-v` to log every cpu instruction, and/or `-b` to pause execution after the bootrom.
